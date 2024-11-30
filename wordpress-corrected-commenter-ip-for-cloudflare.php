@@ -27,6 +27,8 @@ if (!defined('ABSPATH')) {
 	exit; // 防止直接访问
 }
 
+require_once __DIR__ . '/vendor/autoload.php';
+
 class Corrected_Commenter_IP_Cloudflare {
 
 	public function __construct() {
@@ -36,48 +38,23 @@ class Corrected_Commenter_IP_Cloudflare {
 		add_filter('the_comments', [$this, 'display_real_ip_in_admin']);
 	}
 
+
 	/**
 	 * 验证请求是否来自 Cloudflare
 	 *
+	 * @param string $cf_connecting_ip 需要检查的 IP 地址
 	 * @return bool true 表示请求来自 Cloudflare，false 表示不是
 	 */
 	private function is_request_from_cloudflare($cf_connecting_ip) {
 		if (!$cf_connecting_ip) {
 			return false;
 		}
-		foreach ($this->get_cloudflare_ips() as $ip_range) {
-			if ($this->ip_in_cidr($cf_connecting_ip, $ip_range)) {
+		$ip_address = \IPLib\Factory::addressFromString($cf_connecting_ip);
+		foreach ($this->get_cloudflare_ip_ranges() as $ip_range) {
+			if ($ip_range->contains($ip_address)) {
 				return true;
 			}
 		}
-		return false;
-	}
-
-	/**
-	 * 检查一个 IP 是否在给定的 CIDR 范围内
-	 *
-	 * @param string $ip 需要检查的 IP 地址
-	 * @param string $cidr CIDR 表示的地址范围（例如：192.168.0.0/24）
-	 * @return bool 如果 IP 在 CIDR 范围内返回 true，否则返回 false
-	 */
-	private function ip_in_cidr($ip, $cidr) {
-		list($subnet, $mask) = explode('/', $cidr);
-
-		if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) && filter_var($subnet, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
-			// 处理 IPv4
-			$ip_dec = ip2long($ip);
-			$subnet_dec = ip2long($subnet);
-			$mask_dec = ~((1 << (32 - $mask)) - 1);
-			return ($ip_dec & $mask_dec) === ($subnet_dec & $mask_dec);
-		} elseif (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) && filter_var($subnet, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
-			// 处理 IPv6
-			$ip_bin = inet_pton($ip);
-			$subnet_bin = inet_pton($subnet);
-			$mask_bin = str_repeat('f', $mask / 4) . str_repeat('0', (128 - $mask) / 4);
-			$mask_bin = inet_pton(pack('H*', $mask_bin));
-			return ($ip_bin & $mask_bin) === ($subnet_bin & $mask_bin);
-		}
-
 		return false;
 	}
 
@@ -87,35 +64,29 @@ class Corrected_Commenter_IP_Cloudflare {
 	 *
 	 * @return array 包含 IP 范围的数组，例如 ['199.27.128.0/21', '173.245.48.0/20', ...]
 	 */
-	private function get_cloudflare_ips() {
-		$ips = [
-			// ... IPv4 范围
-			'173.245.48.0/20',
-			'103.21.244.0/22',
-			'103.22.200.0/22',
-			'103.31.4.0/22',
-			'141.101.64.0/18',
-			'108.162.192.0/18',
-			'190.93.240.0/20',
-			'188.114.96.0/20',
-			'197.234.240.0/22',
-			'198.41.128.0/17',
-			'162.158.0.0/15',
-			'104.16.0.0/13',
-			'104.24.0.0/14',
-			'172.64.0.0/13',
-			'131.0.72.0/22',
-			// ... IPv6 范围
-			'2a06:98c0::/29',
-			'2400:cb00::/32',
-			'2606:4700::/32',
-			'2803:f800::/32',
-			'2405:b500::/32',
-			'2405:8100::/32',
-			'2c0f:f248::/32',
-		];
-		return $ips;
+	private function get_cloudflare_ip_ranges() {
+		// 读取 IP 范围列表并创建 Range 数组
+		return array_map(function ($cidr) {
+			return \IPLib\Factory::parseRangeString($cidr);
+		}, array_merge($this->load_ip_ranges(__DIR__ . '/cdn-ips.txt')));
 	}
+
+	/**
+	 * 从文件加载 CDN IP 地址列表
+	 * @param string $filePath
+	 * @return array
+	 */
+	private function load_ip_ranges($filePath) {
+		if (!file_exists($filePath)) {
+			return [];
+		}
+
+		$ips = file($filePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+		return array_filter($ips, function ($ip) {
+			return filter_var($ip, FILTER_VALIDATE_IP) || strpos($ip, '/') !== false; // 处理IP段
+		});
+	}
+
 
 	/**
 	 * 在评论元数据中保存真实 IP 和地理位置信息
@@ -123,7 +94,12 @@ class Corrected_Commenter_IP_Cloudflare {
 	 * @param int $comment_id 评论 ID
 	 */
 	public function save_real_ip_on_comment($comment_id) {
-		if (isset($_SERVER['HTTP_CF_CONNECTING_IP']) && filter_var($_SERVER['HTTP_CF_CONNECTING_IP'], FILTER_VALIDATE_IP) && $this->is_request_from_cloudflare($_SERVER['HTTP_CF_CONNECTING_IP'])) {
+		// 检查依赖库是否可用
+		if (!class_exists('\IPLib\Factory')) {
+			wp_die(__('Missing IPLib dependency. Please install the required libraries.', 'wordpress-corrected-commenter-ip-for-cloudflare'));
+		}
+
+		if (isset($_SERVER['HTTP_CF_CONNECTING_IP']) && filter_var($_SERVER['HTTP_CF_CONNECTING_IP'], FILTER_VALIDATE_IP) && $this->is_request_from_cloudflare($_SERVER['REMOTE_ADDR'])) {
 			// 将访客真实 IP 存储为评论的元数据
 			update_comment_meta($comment_id, 'cf_connecting_ip', $_SERVER['HTTP_CF_CONNECTING_IP']);
 			if (isset($_SERVER['HTTP_CF_IPCOUNTRY'])) {
@@ -132,6 +108,8 @@ class Corrected_Commenter_IP_Cloudflare {
 			}
 		}
 	}
+
+
 
 	/**
 	 * 在 WordPress 后台评论管理页面中显示访客的真实 IP 和国家信息
