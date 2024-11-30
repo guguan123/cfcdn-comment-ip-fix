@@ -30,21 +30,27 @@ class Corrected_Commenter_IP_Cloudflare {
 		// 定义定时任务的 Hook
 		add_action('cf_update_cloudflare_ips', 'cf_fetch_and_save_cloudflare_ips');
 		// 插件激活时注册定时任务
-		register_activation_hook(__FILE__, 'cf_schedule_cron_job');
+		register_activation_hook(__FILE__, ['Corrected_Commenter_IP_Cloudflare', 'cf_schedule_cron_job']);
 		// 插件停用时清理定时任务
-		register_deactivation_hook(__FILE__, 'cf_clear_cron_job');
+		register_deactivation_hook(__FILE__, ['Corrected_Commenter_IP_Cloudflare', 'cf_clear_cron_job']);
+		// 卸载插件后清理缓存数据
+		register_uninstall_hook(__FILE__, ['Corrected_Commenter_IP_Cloudflare', 'cf_uninstall']);
 	}
 
-	public function cf_schedule_cron_job() {
+	public static function cf_schedule_cron_job() {
 		if (!wp_next_scheduled('cf_update_cloudflare_ips')) {
 			wp_schedule_event(time(), 'daily', 'cf_update_cloudflare_ips'); // 每日运行
 		}
 	}
-	public function cf_clear_cron_job() {
+	public static function cf_clear_cron_job() {
 		$timestamp = wp_next_scheduled('cf_update_cloudflare_ips');
 		if ($timestamp) {
 			wp_unschedule_event($timestamp, 'cf_update_cloudflare_ips');
 		}
+	}
+	public static function cf_uninstall() {
+		delete_option(self::CLOUDFLARE_IP_CACHE_KEY);
+		self::cf_clear_cron_job();
 	}
 
 
@@ -82,7 +88,7 @@ class Corrected_Commenter_IP_Cloudflare {
 				update_option(self::CLOUDFLARE_IP_CACHE_KEY, json_encode($new_data['result']));
 			}
 		}
-		return $new_data['result'];
+		return json_encode($new_data['result']);
 	}
 
 
