@@ -13,16 +13,6 @@
  * Text Domain:       wordpress-corrected-commenter-ip-for-cloudflare
  */
 
-// Include original plugin license information if available
-/**
- * Original Plugin Name: Real IP and Geo for Cloudflare
- * Original Plugin URI: http://wordpress.org/plugins/cloudflare-real-ip-and-geo/
- * Original Description: Saves and displays visitors' real IP and location, instead of Cloudflare's
- * Original Version: 1.0
- * Original Author: RaMMicHaeL
- * Original Author URI: http://rammichael.com/
- */
-
 if (!defined('ABSPATH')) {
 	exit; // 防止直接访问
 }
@@ -34,9 +24,6 @@ class Corrected_Commenter_IP_Cloudflare {
 	public function __construct() {
 		// 绑定评论发布时保存真实 IP
 		add_action('preprocess_comment', [$this, 'save_real_ip_on_comment']);
-		//add_action('comment_post', [$this, 'save_real_ip_on_comment']);
-		// 绑定后台显示评论真实 IP
-		add_filter('the_comments', [$this, 'display_real_ip_in_admin']);
 	}
 
 
@@ -103,46 +90,8 @@ class Corrected_Commenter_IP_Cloudflare {
 		if (isset($_SERVER['HTTP_CF_CONNECTING_IP']) && filter_var($_SERVER['HTTP_CF_CONNECTING_IP'], FILTER_VALIDATE_IP) && $this->is_request_from_cloudflare($_SERVER['REMOTE_ADDR'])) {
 			// 将访客真实 IP 存储为评论的元数据
 			$commentdata['comment_author_IP'] = $_SERVER['HTTP_CF_CONNECTING_IP'];
-			$commentdata['cf_connecting_ip'] = $_SERVER['REMOTE_ADDR'];
-			if (isset($_SERVER['HTTP_CF_IPCOUNTRY'])) {
-				// 将访客国家代码存储为评论的元数据
-				$commentdata['cf_ipcountry'] = $_SERVER['HTTP_CF_IPCOUNTRY'];
-			}
 		}
 		return $commentdata;
-	}
-
-
-
-	/**
-	 * 在 WordPress 后台评论管理页面中显示访客的真实 IP 和国家信息
-	 *
-	 * @param array $objects 包含评论信息的对象数组
-	 * @return array 修改后的评论对象数组
-	 */
-	public function display_real_ip_in_admin($objects) {
-		// 仅在 WordPress 后台的评论管理页面中执行该功能
-		if (is_admin()) {
-			// 获取当前屏幕对象
-			$current_screen = function_exists('get_current_screen') ? get_current_screen() : null;
-			if ($current_screen && $current_screen->id === 'edit-comments') {
-				// 遍历所有评论对象
-				foreach ($objects as $object) {
-					// 获取评论的真实 IP 信息（如果存在）
-					$cf_connecting_ip = get_comment_meta($object->comment_ID, 'cf_connecting_ip', true);
-					if ($cf_connecting_ip) {
-						// 获取评论的国家代码（如果存在），如果不存在则设置为 "N/A"
-						$cf_ipcountry = get_comment_meta($object->comment_ID, 'cf_ipcountry', true) ?: 'N/A';
-						// 将真实 IP 和国家信息整合到评论作者 IP 字段
-						// 格式为：[国家] 真实IP地址 (cf:代理IP地址)
-						$object->comment_author_IP = "[$cf_ipcountry] $cf_connecting_ip (cf:{$object->comment_author_IP})";
-					}
-				}
-			}
-		}
-
-		// 返回修改后的评论对象数组
-		return $objects;
 	}
 }
 
