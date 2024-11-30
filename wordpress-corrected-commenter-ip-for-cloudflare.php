@@ -42,7 +42,6 @@ class Corrected_Commenter_IP_Cloudflare {
 	 * @return bool true 表示请求来自 Cloudflare，false 表示不是
 	 */
 	private function is_request_from_cloudflare($cf_connecting_ip) {
-		error_log('is_request_from_cloudflare_stsart');
 		if (!$cf_connecting_ip) {
 			return false;
 		}
@@ -124,7 +123,6 @@ class Corrected_Commenter_IP_Cloudflare {
 	 * @param int $comment_id 评论 ID
 	 */
 	public function save_real_ip_on_comment($comment_id) {
-		error_log('save_real_ip_on_comment_stsart');
 		if (isset($_SERVER['HTTP_CF_CONNECTING_IP']) && filter_var($_SERVER['HTTP_CF_CONNECTING_IP'], FILTER_VALIDATE_IP) && $this->is_request_from_cloudflare($_SERVER['HTTP_CF_CONNECTING_IP'])) {
 			// 将访客真实 IP 存储为评论的元数据
 			update_comment_meta($comment_id, 'cf_connecting_ip', $_SERVER['HTTP_CF_CONNECTING_IP']);
