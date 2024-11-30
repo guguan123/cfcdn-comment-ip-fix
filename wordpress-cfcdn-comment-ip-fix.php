@@ -10,7 +10,7 @@
  * Author URI:        https://github.com/guguan123/
  * License:           MIT
  * License URI:       https://choosealicense.com/licenses/mit/
- * Text Domain:       wordpress-corrected-commenter-ip-for-cloudflare
+ * Text Domain:       wordpress-cfcdn-comment-ip-fix
  */
 
 if (!defined('ABSPATH')) {
