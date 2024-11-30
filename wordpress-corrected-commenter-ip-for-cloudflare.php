@@ -5,7 +5,7 @@
  * Plugin Name:       Corrected commenter IP for Cloudflare
  * Plugin URI:        https://github.com/guguan123/wordpress-corrected-commenter-ip-for-cloudflare
  * Description:       修复评论者的IP信息，适用于使用Cloudflare CDN的网站。
- * Version:           1.0.0
+ * Version:           0.1.0
  * Author:            GuGuan123
  * Author URI:        https://github.com/guguan123/
  * License:           GPL-2.0+
