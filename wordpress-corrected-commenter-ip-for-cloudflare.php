@@ -33,7 +33,8 @@ class Corrected_Commenter_IP_Cloudflare {
 
 	public function __construct() {
 		// 绑定评论发布时保存真实 IP
-		add_action('comment_post', [$this, 'save_real_ip_on_comment']);
+		add_action('preprocess_comment', [$this, 'save_real_ip_on_comment']);
+		//add_action('comment_post', [$this, 'save_real_ip_on_comment']);
 		// 绑定后台显示评论真实 IP
 		add_filter('the_comments', [$this, 'display_real_ip_in_admin']);
 	}
@@ -49,9 +50,8 @@ class Corrected_Commenter_IP_Cloudflare {
 		if (!$cf_connecting_ip) {
 			return false;
 		}
-		$ip_address = \IPLib\Factory::addressFromString($cf_connecting_ip);
 		foreach ($this->get_cloudflare_ip_ranges() as $ip_range) {
-			if ($ip_range->contains($ip_address)) {
+			if ($ip_range->contains(\IPLib\Factory::addressFromString($cf_connecting_ip))) {
 				return true;
 			}
 		}
@@ -91,22 +91,25 @@ class Corrected_Commenter_IP_Cloudflare {
 	/**
 	 * 在评论元数据中保存真实 IP 和地理位置信息
 	 *
-	 * @param int $comment_id 评论 ID
+	 * @param int $commentdata
 	 */
-	public function save_real_ip_on_comment($comment_id) {
+	public function save_real_ip_on_comment($commentdata) {
 		// 检查依赖库是否可用
 		if (!class_exists('\IPLib\Factory')) {
-			wp_die(__('Missing IPLib dependency. Please install the required libraries.', 'wordpress-corrected-commenter-ip-for-cloudflare'));
+			error_log(__('IPLib not found. Real IP validation skipped.', 'wordpress-corrected-commenter-ip-for-cloudflare'));
+			return $commentdata;
 		}
 
 		if (isset($_SERVER['HTTP_CF_CONNECTING_IP']) && filter_var($_SERVER['HTTP_CF_CONNECTING_IP'], FILTER_VALIDATE_IP) && $this->is_request_from_cloudflare($_SERVER['REMOTE_ADDR'])) {
 			// 将访客真实 IP 存储为评论的元数据
-			update_comment_meta($comment_id, 'cf_connecting_ip', $_SERVER['HTTP_CF_CONNECTING_IP']);
+			$commentdata['comment_author_IP'] = $_SERVER['HTTP_CF_CONNECTING_IP'];
+			$commentdata['cf_connecting_ip'] = $_SERVER['REMOTE_ADDR'];
 			if (isset($_SERVER['HTTP_CF_IPCOUNTRY'])) {
 				// 将访客国家代码存储为评论的元数据
-				update_comment_meta($comment_id, 'cf_ipcountry', $_SERVER['HTTP_CF_IPCOUNTRY']);
+				$commentdata['cf_ipcountry'] = $_SERVER['HTTP_CF_IPCOUNTRY'];
 			}
 		}
+		return $commentdata;
 	}
 
 
