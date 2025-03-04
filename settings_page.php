@@ -7,8 +7,8 @@ $ip_cache = json_decode(get_option(self::CDN_IP_CACHE_KEY), true);
 $now_ip = $this->getXForwardedForIp($this->get_cdn_ip_ranges());
 ?>
 <div class="wrap">
-	<h1>Cloudflare 修正评论者 IP</h1>
-	<p>这是 Cloudflare 修正评论者 IP 插件的管理页面。</p>
+	<h1>修正评论者 IP</h1>
+	<p>这是修正评论者 IP 插件的管理页面。</p>
 	<p>识别到的 IP：<?php echo $now_ip ?: 'N/A'; ?></p>
 	<hr />
 	<pre>

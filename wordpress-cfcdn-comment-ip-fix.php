@@ -1,22 +1,28 @@
 <?php
 /**
  * @wordpress-plugin
- * Plugin Name:       Corrected commenter IP for Cloudflare CDN
- * Plugin URI:        https://github.com/guguan123/wordpress-cfcdn-comment-ip-fix
- * Description:       修复评论者的IP信息，适用于使用Cloudflare CDN的网站。
+ * Plugin Name:       Corrected commenter IP for FcCDN
+ * Plugin URI:        https://github.com/guguan123/cfcdn-comment-ip-fix
+ * Description:       修复评论者的IP信息，适用于使用 Cloudflare CDN 的网站。（本插件不是 Cloudflare 开发的！）
  * Version:           0.1.1
  * Author:            GuGuan123
- * Author URI:        https://github.com/guguan123/
+ * Author URI:        https://guguan.us.kg
  * License:           MIT
  * License URI:       https://choosealicense.com/licenses/mit/
- * Text Domain:       wordpress-cfcdn-comment-ip-fix
+ * Text Domain:       cfcdn-comment-ip-fix
+ * Requires at least: 6.7.2
+ * Tested up to:      6.0
+ * PHP Version:       8.2
+ * Requires PHP:      7.0
+ * Changelog:         https://github.com/guguan123/cfcdn-comment-ip-fix/releases
+ * Support:           https://github.com/guguan123/cfcdn-comment-ip-fix/issues
  */
 
 if (!defined('ABSPATH')) {
 	exit; // 防止直接访问
 }
 
-class Corrected_Commenter_IP_Cloudflare {
+class Corrected_Commenter_IP_CfCDN {
 
 	// 定义缓存的唯一选项键
 	const CDN_IP_CACHE_KEY = 'cdn_ip_cache';
@@ -28,17 +34,17 @@ class Corrected_Commenter_IP_Cloudflare {
 		}
 
 		// 插件激活时注册定时任务
-		register_activation_hook(__FILE__, ['Corrected_Commenter_IP_Cloudflare', 'cf_schedule_cron_job']);
+		register_activation_hook(__FILE__, ['Corrected_Commenter_IP_CfCDN', 'cf_schedule_cron_job']);
 		// 插件停用时清理定时任务
-		register_deactivation_hook(__FILE__, ['Corrected_Commenter_IP_Cloudflare', 'cf_clear_cron_job']);
+		register_deactivation_hook(__FILE__, ['Corrected_Commenter_IP_CfCDN', 'cf_clear_cron_job']);
 		// 卸载插件后清理缓存数据
-		register_uninstall_hook(__FILE__, ['Corrected_Commenter_IP_Cloudflare', 'cf_uninstall']);
+		register_uninstall_hook(__FILE__, ['Corrected_Commenter_IP_CfCDN', 'cf_uninstall']);
 		// 绑定评论发布时保存真实 IP
 		add_action('preprocess_comment', [$this, 'save_real_ip_on_comment']);
 		// 定义定时任务的 Hook
 		add_action('cf_update_cloudflare_ips', 'cf_fetch_and_save_cloudflare_ips');
 		// 添加管理页面
-		add_action('admin_menu', [$this, 'corrected_commenter_ip_cloudflare_admin_menu']);
+		add_action('admin_menu', [$this, 'Corrected_Commenter_IP_CfCDN_admin_menu']);
 		// 处理表单提交
 		add_action('admin_init', [$this, 'handle_form_submission']);
 		// 添加 AJAX 动作
@@ -78,7 +84,7 @@ class Corrected_Commenter_IP_Cloudflare {
 		self::cf_clear_cron_job();
 	}
 
-	public function corrected_commenter_ip_cloudflare_admin_menu() {
+	public function Corrected_Commenter_IP_CfCDN_admin_menu() {
 		// 添加顶级菜单页面
 		add_submenu_page(
 			'options-general.php', // “设置”菜单的 slug
@@ -86,12 +92,12 @@ class Corrected_Commenter_IP_Cloudflare {
 			'Cloudflare IP fix',
 			'manage_options',
 			'corrected-commenter-ip-cloudflare',
-			[$this, 'corrected_commenter_ip_cloudflare_admin_page']
+			[$this, 'Corrected_Commenter_IP_CfCDN_admin_page']
 		);
 	}
 
 	// 渲染管理页面
-	public function corrected_commenter_ip_cloudflare_admin_page() {
+	public function Corrected_Commenter_IP_CfCDN_admin_page() {
 		wp_enqueue_script('jquery');
 		require_once 'settings_page.php';
 	}
@@ -333,4 +339,4 @@ class Corrected_Commenter_IP_Cloudflare {
 }
 
 // 初始化插件
-new Corrected_Commenter_IP_Cloudflare();
+new Corrected_Commenter_IP_CfCDN();
