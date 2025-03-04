@@ -32,19 +32,11 @@ A6: 仅支持 Cloudflare CDN
 
 ![插件设置页面截图](https://s1.imagehub.cc/images/2025/03/04/cf8c3fb5738de0382307a223f211256b.png)
 
-## Stable tag
-
-- **Stable tag**: 0.1.1
-
-## Upgrade Notice
-
-- **v0.1.1**：初始发布。
-
 ## Compatibility
 
-- **Tested up to**: WordPress 6.7.2
-- **Requires at least**: WordPress 6.0
-- **Requires PHP**: 7.4
+Tested up to: WordPress 6.7.2
+Requires at least: WordPress 6.0
+Requires PHP: 7.4
 
 ## Install
 
