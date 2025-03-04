@@ -1,7 +1,7 @@
 <?php
 /**
  * @wordpress-plugin
- * Plugin Name:       Corrected commenter IP for FcCDN
+ * Plugin Name:       CfCDN Comment IP Fix
  * Plugin URI:        https://github.com/guguan123/cfcdn-comment-ip-fix
  * Description:       修复评论者的IP信息，适用于使用 Cloudflare CDN 的网站。（本插件不是 Cloudflare 开发的！）
  * Version:           0.1.1
