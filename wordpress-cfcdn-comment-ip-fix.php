@@ -2,8 +2,8 @@
 
 /**
  * @wordpress-plugin
- * Plugin Name:       Corrected commenter IP for Cloudflare
- * Plugin URI:        https://github.com/guguan123/wordpress-corrected-commenter-ip-for-cloudflare
+ * Plugin Name:       Corrected commenter IP for Cloudflare CDN
+ * Plugin URI:        https://github.com/guguan123/wordpress-cfcdn-comment-ip-fix
  * Description:       修复评论者的IP信息，适用于使用Cloudflare CDN的网站。
  * Version:           0.1.0
  * Author:            GuGuan123
@@ -25,34 +25,108 @@ class Corrected_Commenter_IP_Cloudflare {
 	const CLOUDFLARE_IP_CACHE_KEY = 'cloudflare_ip_cache';
 
 	public function __construct() {
-		// 绑定评论发布时保存真实 IP
-		add_action('preprocess_comment', [$this, 'save_real_ip_on_comment']);
-		// 定义定时任务的 Hook
-		add_action('cf_update_cloudflare_ips', 'cf_fetch_and_save_cloudflare_ips');
 		// 插件激活时注册定时任务
 		register_activation_hook(__FILE__, ['Corrected_Commenter_IP_Cloudflare', 'cf_schedule_cron_job']);
 		// 插件停用时清理定时任务
 		register_deactivation_hook(__FILE__, ['Corrected_Commenter_IP_Cloudflare', 'cf_clear_cron_job']);
 		// 卸载插件后清理缓存数据
 		register_uninstall_hook(__FILE__, ['Corrected_Commenter_IP_Cloudflare', 'cf_uninstall']);
+		// 绑定评论发布时保存真实 IP
+		add_action('preprocess_comment', [$this, 'save_real_ip_on_comment']);
+		// 定义定时任务的 Hook
+		add_action('cf_update_cloudflare_ips', 'cf_fetch_and_save_cloudflare_ips');
+		// 添加管理页面
+		add_action('admin_menu', [$this, 'corrected_commenter_ip_cloudflare_admin_menu']);
+		// 处理表单提交
+		add_action('admin_init', [$this, 'handle_form_submission']);
+		// 添加 AJAX 动作
+		add_action('wp_ajax_update_cloudflare_ips', [$this, 'handle_ajax_update']);
 	}
 
+	/**
+	 * 计划每日执行的cron任务来更新Cloudflare IP。
+	 */
 	public static function cf_schedule_cron_job() {
+		// 检查cron任务是否已经计划
 		if (!wp_next_scheduled('cf_update_cloudflare_ips')) {
-			wp_schedule_event(time(), 'daily', 'cf_update_cloudflare_ips'); // 每日运行
+			// 计划cron任务每日执行
+			wp_schedule_event(time(), 'daily', 'cf_update_cloudflare_ips');
 		}
 	}
+
+	/**
+	 * 清除计划的cron任务来更新Cloudflare IP。
+	 */
 	public static function cf_clear_cron_job() {
+		// 获取下一次计划的cron任务的时间戳
 		$timestamp = wp_next_scheduled('cf_update_cloudflare_ips');
+		// 如果cron任务已经计划，取消计划
 		if ($timestamp) {
 			wp_unschedule_event($timestamp, 'cf_update_cloudflare_ips');
 		}
 	}
+
+	/**
+	 * 卸载插件，删除缓存的Cloudflare IP和清除cron任务。
+	 */
 	public static function cf_uninstall() {
+		// 删除缓存的Cloudflare IP
 		delete_option(self::CLOUDFLARE_IP_CACHE_KEY);
+		// 清除计划的cron任务
 		self::cf_clear_cron_job();
 	}
 
+
+	public function corrected_commenter_ip_cloudflare_admin_menu() {
+		// 添加顶级菜单页面
+		add_submenu_page(
+			'options-general.php', // “设置”菜单的 slug
+			'Cloudflare IP 修正评论者',
+			'Cloudflare IP',
+			'manage_options',
+			'corrected-commenter-ip-cloudflare',
+			[$this, 'corrected_commenter_ip_cloudflare_admin_page']
+		);
+	}
+
+	// 渲染管理页面
+	public function corrected_commenter_ip_cloudflare_admin_page() {
+		wp_enqueue_script('jquery');
+		require_once 'settings_page.php';
+	}
+
+	// 处理更新按钮的表单提交
+	public function handle_form_submission() {
+		if (isset($_POST['update_cloudflare_ips']) && 
+			current_user_can('manage_options') && 
+			check_admin_referer('cloudflare_ip_settings-options')) {
+			$this->cf_fetch_and_save_cloudflare_ips();
+			add_settings_error(
+				'cloudflare_ip_messages',
+				'cache_updated',
+				'Cloudflare IP 缓存已成功更新！',
+				'success'
+			);
+		}
+	}
+
+	// 处理 AJAX 请求
+    public function handle_ajax_update() {
+        // 验证权限和 nonce
+        if (!current_user_can('manage_options') || 
+            !check_ajax_referer('cloudflare_ip_settings-options', 'nonce', false)) {
+            wp_send_json_error(['message' => '权限不足或请求无效。']);
+        }
+
+        // 执行更新操作
+        $this->cf_fetch_and_save_cloudflare_ips();
+
+        // 返回成功响应
+        wp_send_json_success([
+            'message' => 'Cloudflare IP 缓存已成功更新！',
+            'cache_data' => print_r(get_option(self::CLOUDFLARE_IP_CACHE_KEY), true) // 返回更新后的缓存数据
+        ]);
+    }
 
 	// 获取并缓存 Cloudflare IP 范围的函数
 	public function cf_fetch_and_save_cloudflare_ips() {
@@ -87,6 +161,9 @@ class Corrected_Commenter_IP_Cloudflare {
 				// 用新数据更新缓存
 				update_option(self::CLOUDFLARE_IP_CACHE_KEY, json_encode($new_data['result']));
 			}
+		} else {
+			// 如果没有缓存，直接保存新数据
+			update_option(self::CLOUDFLARE_IP_CACHE_KEY, json_encode($new_data['result']));
 		}
 		return json_encode($new_data['result']);
 	}
@@ -96,15 +173,15 @@ class Corrected_Commenter_IP_Cloudflare {
 	/**
 	 * 验证请求是否来自 Cloudflare
 	 *
-	 * @param string $cf_connecting_ip 需要检查的 IP 地址
+	 * @param string $connecting_ip 需要检查的 IP 地址
 	 * @return bool true 表示请求来自 Cloudflare，false 表示不是
 	 */
-	private function is_request_from_cloudflare($cf_connecting_ip) {
-		if (!$cf_connecting_ip) {
+	private function is_request_from_cdn($connecting_ip) {
+		if (empty($connecting_ip)) {
 			return false;
 		}
-		foreach ($this->get_cloudflare_ip_ranges() as $ip_range) {
-			if ($ip_range->contains(\IPLib\Factory::addressFromString($cf_connecting_ip))) {
+		foreach ($this->get_ip_ranges() as $ip_range) {
+			if ($ip_range->contains(\IPLib\Factory::addressFromString($connecting_ip))) {
 				return true;
 			}
 		}
@@ -117,7 +194,7 @@ class Corrected_Commenter_IP_Cloudflare {
 	 *
 	 * @return array 包含 IP 范围的数组，例如 ['199.27.128.0/21', '173.245.48.0/20', ...]
 	 */
-	private function get_cloudflare_ip_ranges() {
+	private function get_ip_ranges() {
 		// 从缓存中获取 Cloudflare IP 数据
 		$ips_json_data = get_option(self::CLOUDFLARE_IP_CACHE_KEY);
 	
@@ -147,7 +224,7 @@ class Corrected_Commenter_IP_Cloudflare {
 			return $commentdata;
 		}
 
-		if (isset($_SERVER['HTTP_CF_CONNECTING_IP']) && filter_var($_SERVER['HTTP_CF_CONNECTING_IP'], FILTER_VALIDATE_IP) && $this->is_request_from_cloudflare($_SERVER['REMOTE_ADDR'])) {
+		if (isset($_SERVER['HTTP_CF_CONNECTING_IP']) && filter_var($_SERVER['HTTP_CF_CONNECTING_IP'], FILTER_VALIDATE_IP) && $this->is_request_from_cdn($_SERVER['REMOTE_ADDR'])) {
 			// 将访客真实 IP 存储为评论的元数据
 			$commentdata['comment_author_IP'] = $_SERVER['HTTP_CF_CONNECTING_IP'];
 		}
