@@ -24,8 +24,8 @@ class Corrected_Commenter_IP_Cloudflare {
 	public function __construct() {
 		// 加载第三方库文件
 		if (file_exists(__DIR__ . '/vendor/autoload.php')) {
-            require_once __DIR__ . '/vendor/autoload.php';
-        }
+			require_once __DIR__ . '/vendor/autoload.php';
+		}
 
 		// 插件激活时注册定时任务
 		register_activation_hook(__FILE__, ['Corrected_Commenter_IP_Cloudflare', 'cf_schedule_cron_job']);
@@ -148,27 +148,27 @@ class Corrected_Commenter_IP_Cloudflare {
 	}
 
 	// 处理 AJAX 请求
-    public function handle_ajax_update() {
-        // 验证权限和 nonce
-        if (!current_user_can('manage_options') || 
-            !check_ajax_referer('cloudflare_ip_settings-options', 'nonce', false)) {
-            wp_send_json_error(['message' => '权限不足或请求无效。']);
-        }
+	public function handle_ajax_update() {
+		// 验证权限和 nonce
+		if (!current_user_can('manage_options') || 
+			!check_ajax_referer('cloudflare_ip_settings-options', 'nonce', false)) {
+			wp_send_json_error(['message' => '权限不足或请求无效。']);
+		}
 
-        // 执行更新操作
-        $cf_ip_data = $this->cf_fetch_and_save_cloudflare_ips();
+		// 执行更新操作
+		$cf_ip_data = $this->cf_fetch_and_save_cloudflare_ips();
 
 		if ($cf_ip_data['status'] === 'success')  {
-    	    // 返回成功响应
-    	    wp_send_json_success([
-    	        'message' => 'Cloudflare IP 缓存已成功更新！',
-    	        'cache_data' => print_r(json_decode(get_option(self::CDN_IP_CACHE_KEY), true), true) // 返回更新后的缓存数据
-    	    ]);
+			// 返回成功响应
+			wp_send_json_success([
+				'message' => 'Cloudflare IP 缓存已成功更新！',
+				'cache_data' => print_r(json_decode(get_option(self::CDN_IP_CACHE_KEY), true), true) // 返回更新后的缓存数据
+			]);
 		} else {
 			// 返回错误响应
 			wp_send_json_error(['message' => 'Cloudflare IP 缓存更新失败：' . $cf_ip_data['message']]);
 		}
-    }
+	}
 
 	// 获取并缓存 Cloudflare IP 范围的函数
 	public function cf_fetch_and_save_cloudflare_ips() {
