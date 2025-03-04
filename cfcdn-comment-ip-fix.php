@@ -131,7 +131,7 @@ class Corrected_Commenter_IP_CfCDN {
 			check_admin_referer('cloudflare_ip_settings-options')) {
 
 			if (!empty($_POST['additional_cdn_ips'])) {
-				$additional_ips = explode(',', sanitize_text_field($_POST['additional_cdn_ips']));
+				$additional_ips = explode(',', sanitize_text_field(wp_unslash($_POST['additional_cdn_ips'])));
 			}
 
 			// 获取现有缓存数据
@@ -184,13 +184,11 @@ class Corrected_Commenter_IP_CfCDN {
 		// 从 API 获取新数据
 		$response = wp_remote_get($api_url);
 		if (is_wp_error($response)) {
-			error_log('获取 Cloudflare IP 数据失败: ' . $response->get_error_message());
 			return ['status' => 'error', 'message' => '获取 Cloudflare IP 数据失败' . $response->get_error_message()];
 		}
 		$response_body = wp_remote_retrieve_body($response);
 		$new_cloudflare_data = json_decode($response_body, true);
 		if (!$new_cloudflare_data['success']) {
-			error_log('Cloudflare API 返回错误：' . json_encode($new_cloudflare_data['errors'], JSON_UNESCAPED_UNICODE));
 			return ['status' => 'error', 'message' => 'Cloudflare API 返回错误：' . json_encode($new_cloudflare_data['errors'], JSON_UNESCAPED_UNICODE)];
 		}
 
@@ -309,7 +307,7 @@ class Corrected_Commenter_IP_CfCDN {
 	public function save_real_ip_on_comment($commentdata) {
 		// 检查依赖库是否可用
 		if (!class_exists('\IPLib\Factory')) {
-			error_log(__('IPLib not found. Real IP validation skipped.', 'wordpress-cfcdn-comment-ip-fix'));
+			error_log(__('IPLib not found. Real IP validation skipped.', 'cfcdn-comment-ip-fix'));
 			return $commentdata;
 		}
 
