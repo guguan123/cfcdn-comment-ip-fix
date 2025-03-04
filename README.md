@@ -1,6 +1,6 @@
 # WP-CfCDN-Comment-IP-Fix
 
-**WordPress 插件** 用于修正评论者的 IP 地址，专为使用 Cloudflare CDN 的网站设计。  
+此 WordPress 插件用于修正评论者的 IP 地址，专为使用 Cloudflare CDN 的网站设计。  
 它能够处理来自 Cloudflare 的代理 IP，确保获取真实的评论者 IP 信息。
 
 ## Usage
