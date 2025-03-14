@@ -1,4 +1,4 @@
-=== Corrected commenter IP for FcCDN ===
+=== Corrected commenter IP for Cloudflare CDN ===
 Contributors: GuGuan123
 Donate link: https://s1.imagehub.cc/images/2025/03/04/33128a3f3455b55b5c7321ee4c05527c.jpg
 Tags: Cloudflare, IP, Security, CDN
