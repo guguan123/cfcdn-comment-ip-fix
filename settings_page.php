@@ -11,10 +11,6 @@ $now_ip = $this->getXForwardedForIp($this->get_cdn_ip_ranges());
 	<p>这是修正评论者 IP 插件的管理页面。</p>
 	<p>识别到的 IP：<?php echo $now_ip ?: 'N/A'; ?></p>
 	<hr />
-	<pre>
-		<?php print_r($ip_cache); ?>
-	</pre>
-	<hr />
 	<form method="post" id="update-cloudflare-ips-form">
 		<?php settings_fields('cloudflare_ip_settings'); // 添加 nonce 等字段 ?>
 		<?php submit_button('更新 Cloudflare IP 缓存', 'secondary', 'update_cloudflare_ips', false); ?>
@@ -27,6 +23,11 @@ $now_ip = $this->getXForwardedForIp($this->get_cdn_ip_ranges());
 
 		<?php submit_button('更新额外 CDN IPs', 'secondary', 'update_additional_cdn_ips', false); ?>
 	</form>
+	<hr />
+	<h2>当前存储的 IP 信息</h2>
+	<pre>
+		<?php print_r($ip_cache); ?>
+	</pre>
 </div>
 
 <script type="text/javascript">

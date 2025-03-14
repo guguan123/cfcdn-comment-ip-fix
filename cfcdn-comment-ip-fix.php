@@ -1,12 +1,12 @@
 <?php
 /**
  * @wordpress-plugin
- * Plugin Name:       CfCDN Comment IP Fix
+ * Plugin Name:       Corrected commenter IP for Cloudflare CDN
  * Plugin URI:        https://github.com/guguan123/cfcdn-comment-ip-fix
- * Description:       修复评论者的IP信息，适用于使用 Cloudflare CDN 的网站。（本插件不是 Cloudflare 开发的！）
+ * Description:       修复评论者的IP信息，适用于使用 Cloudflare CDN 的网站。（🚨本插件不属于 Cloudflare 官方！）
  * Version:           0.1.1
  * Author:            GuGuan123
- * Author URI:        https://guguan.us.kg
+ * Author URI:        https://github.com/guguan123
  * License:           MIT
  * License URI:       https://choosealicense.com/licenses/mit/
  * Text Domain:       cfcdn-comment-ip-fix
