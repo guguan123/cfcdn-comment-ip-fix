@@ -9,7 +9,7 @@ $now_ip = $this->getXForwardedForIp($this->get_cdn_ip_ranges());
 <div class="wrap">
 	<h1>修正评论者 IP</h1>
 	<p>这是修正评论者 IP 插件的管理页面。</p>
-	<p>识别到的 IP：<?php echo $now_ip ?: 'N/A'; ?></p>
+	<p>识别到的 IP：<?php echo esc_html($now_ip ?: 'N/A'); ?></p>
 	<hr />
 	<form method="post" id="update-cloudflare-ips-form">
 		<?php settings_fields('cloudflare_ip_settings'); // 添加 nonce 等字段 ?>
@@ -19,7 +19,7 @@ $now_ip = $this->getXForwardedForIp($this->get_cdn_ip_ranges());
 		<?php settings_fields('cloudflare_ip_settings'); // 添加 nonce 等字段 ?>
 		<h2>额外 CDN IP</h2>
 		<p>请输入额外的 CDN IP 地址（多个地址请用逗号分隔）：</p>
-		<input type="text" name="additional_cdn_ips" value="<?php if (isset($ip_cache['other_cidrs'])) echo implode(',', $ip_cache['other_cidrs']); ?>" class="regular-text" />
+		<input type="text" name="additional_cdn_ips" value="<?php if (isset($ip_cache['other_cidrs'])) echo esc_html(implode(',', $ip_cache['other_cidrs'])); ?>" class="regular-text" />
 
 		<?php submit_button('更新额外 CDN IPs', 'secondary', 'update_additional_cdn_ips', false); ?>
 	</form>
