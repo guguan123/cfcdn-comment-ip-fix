@@ -22,9 +22,6 @@ if (!defined('ABSPATH')) {
 	exit; // 防止直接访问
 }
 
-ini_set("display_errors", "On");//打开错误提示
-ini_set("error_reporting", E_ALL);//显示所有错误
-
 class Corrected_Commenter_IP_CfCDN {
 
 	// 定义缓存的唯一选项键
