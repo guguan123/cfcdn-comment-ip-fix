@@ -105,7 +105,7 @@ class Corrected_Commenter_IP_CfCDN {
 
 	// 渲染管理页面
 	public function cfcdnipfix_admin_page() {
-		require_once 'settings_page.php';
+		require_once 'settings-page.php';
 	}
 
 	public function cfcdnipfix_enqueue_admin_scripts($hook_suffix) {
