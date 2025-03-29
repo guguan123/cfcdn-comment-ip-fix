@@ -294,20 +294,15 @@ class Corrected_Commenter_IP_CfCDN {
 			return ['status' => 'error', 'message' => 'Cloudflare API 返回错误：' . json_encode($new_cloudflare_data['errors'], JSON_UNESCAPED_UNICODE)];
 		}
 
-		// 获取现有缓存数据
-		$cached_data = get_option(self::CDN_IP_CACHE_KEY);
+		// 获取现有缓存数据并将缓存数据解码为数组
+		$cached_data = json_decode(get_option(self::CDN_IP_CACHE_KEY), true);
 
-		// 如果已有缓存，检查 etag 以判断是否需要更新
-		if ($cached_data) {
-			$cached_data = json_decode($cached_data, true); // 将缓存数据解码为数组
-
-			// 如果 etag 不一致，则更新缓存
-			if (isset($cached_data['cloudflare']['etag']) && isset($new_cloudflare_data['result']['etag']) && $cached_data['cloudflare']['etag'] !== $new_cloudflare_data['result']['etag']) {
-				$cached_data['cloudflare'] = $new_cloudflare_data['result'];
-			}
-		} else {
+		if (empty($cached_data['other_cidrs'])) {
 			// 如果没有缓存，直接保存新数据
 			$cached_data = array("cloudflare" => $new_cloudflare_data['result']);
+		} elseif (empty($cached_data['cloudflare']['etag']) || (isset($cached_data['cloudflare']['etag']) && isset($new_cloudflare_data['result']['etag']) && $cached_data['cloudflare']['etag'] !== $new_cloudflare_data['result']['etag'])) {
+			// 如果已有缓存并且有额外的 IP 地址，检查 etag 以判断是否需要更新
+			$cached_data['cloudflare'] = $new_cloudflare_data['result'];
 		}
 		update_option(self::CDN_IP_CACHE_KEY, json_encode($cached_data));
 		return ['status' => 'success', 'data' => json_encode($cached_data)];
