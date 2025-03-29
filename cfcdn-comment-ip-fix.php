@@ -190,17 +190,26 @@ class Corrected_Commenter_IP_CfCDN {
 			// 获取现有缓存数据
 			$cached_data = json_decode(get_option(self::CDN_IP_CACHE_KEY), true);
 			if (isset($cached_data['cloudflare']) && !empty($_POST['cfcdnipfix_additional_cdn_ips'])) {
+				// 如果用户输入的 IP 地址不为空并且已经有了 Cloudflare IPs，则更新缓存数据
 				$new_cached_data['other_cidrs'] = $additional_ips;
+				$new_cached_data['cloudflare'] = $cached_data['cloudflare'];
 			} elseif (!empty($_POST['cfcdnipfix_additional_cdn_ips'])) {
+				// 如果用户输入的 IP 地址不为空并且没有 Cloudflare IPs，则只更新额外的 IP 地址
 				$new_cached_data = array('other_cidrs' => $additional_ips);
 			} elseif (!empty($cached_data['cloudflare'])) {
+				// 如果没有用户输入的 IP 地址但有 Cloudflare IPs，则只保留 Cloudflare IPs
 				$new_cached_data = array('cloudflare' => $cached_data['cloudflare']);
 			}
+
 			if (empty($new_cached_data)) {
+				// 如果没有用户输入的 IP 地址且没有 Cloudflare IPs，则删除缓存数据
 				delete_option(self::CDN_IP_CACHE_KEY);
 			} else {
-				update_option(self::CDN_IP_CACHE_KEY, json_encode($cached_data));
+				// 更新缓存数据
+				update_option(self::CDN_IP_CACHE_KEY, json_encode($new_cached_data));
 			}
+
+			// 添加成功消息
 			add_settings_error(
 				'cfcdnipfix_messages',
 				'cache_updated',
