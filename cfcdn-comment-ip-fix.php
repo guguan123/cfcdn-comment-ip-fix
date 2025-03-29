@@ -50,6 +50,8 @@ class Corrected_Commenter_IP_CfCDN {
 		add_action('admin_menu', [$this, 'cfcdnipfix_admin_menu']);
 		// 处理表单提交
 		add_action('admin_init', [$this, 'cfcdnipfix_handle_form_submission']);
+		// 注册管理页面脚本
+		add_action('admin_enqueue_scripts', [$this, 'cfcdnipfix_enqueue_admin_scripts']);
 		// 添加 AJAX 动作
 		add_action('wp_ajax_cfcdnipfix_update_cloudflare_ips', [$this, 'cfcdnipfix_handle_ajax_update']);
 	}
@@ -103,8 +105,37 @@ class Corrected_Commenter_IP_CfCDN {
 
 	// 渲染管理页面
 	public function cfcdnipfix_admin_page() {
-		wp_enqueue_script('jquery');
 		require_once 'settings_page.php';
+	}
+
+	public function cfcdnipfix_enqueue_admin_scripts($hook_suffix) {
+		// 只在特定页面加载脚本
+		if ($hook_suffix !== 'settings_page_corrected-commenter-ip-cloudflare') {
+			return;
+		}
+	
+		// 注册并加载外部 JS 文件
+		wp_enqueue_script(
+			// 唯一句柄
+			'cfcdnipfix-admin-scripts',
+			// 文件路径（assets/js 目录）
+			plugins_url('assets/js/settings-page-scripts.js', __FILE__),
+			// 依赖 jQuery
+			array('jquery'),
+			// 版本号
+			'0.1.1',
+			// 加载到 <footer>
+			true
+		);
+	
+		// 传递 AJAX 所需的动态数据
+		wp_localize_script(
+			'cfcdnipfix-admin-scripts',
+			'cfcdnipfix_params',
+			array(
+				'ajaxurl' => admin_url('admin-ajax.php')
+			)
+		);
 	}
 
 	// 处理更新按钮的表单提交

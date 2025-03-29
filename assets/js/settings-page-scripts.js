@@ -13,7 +13,7 @@ jQuery(document).ready(function($) {
 			nonce: $('#_wpnonce').val() // 从 settings_fields 生成的 nonce
 		};
 
-		$.post(ajaxurl, data, function(response) {
+		$.post(cfcdnipfix_params.ajaxurl, data, function(response) {
 			if (response.success) {
 				// 更新成功
 				$('#setting-error-cfcdnipfix_messages').remove(); // 移除旧消息
