@@ -54,6 +54,8 @@ class Corrected_Commenter_IP_CfCDN {
 		add_action('admin_enqueue_scripts', [$this, 'cfcdnipfix_enqueue_admin_scripts']);
 		// 添加 AJAX 动作
 		add_action('wp_ajax_cfcdnipfix_update_cloudflare_ips', [$this, 'cfcdnipfix_handle_ajax_update']);
+		// 加载语言翻译
+		add_action('plugins_loaded', [$this, 'cfcdnipfix_load_textdomain']);
 	}
 
 	/**
@@ -89,13 +91,17 @@ class Corrected_Commenter_IP_CfCDN {
 		self::cfcdnipfix_clear_cron_job();
 	}
 
+	public function cfcdnipfix_load_textdomain() {
+		load_plugin_textdomain('cfcdn-comment-ip-fix', false, dirname(plugin_basename(__FILE__)) . '/languages/');
+	}
+
 
 
 	public function cfcdnipfix_admin_menu() {
 		// 添加顶级菜单页面
 		add_submenu_page(
 			'options-general.php', // “设置”菜单的 slug
-			'Cloudflare 修正评论者 IP',
+			__('Cloudflare Commenter IP Fix', 'cfcdn-comment-ip-fix'),
 			'Cloudflare IP fix',
 			'manage_options',
 			'corrected-commenter-ip-cloudflare',
@@ -149,14 +155,17 @@ class Corrected_Commenter_IP_CfCDN {
 				add_settings_error(
 					'cfcdnipfix_messages',
 					'cache_updated',
-					'Cloudflare IP 缓存已成功更新！',
+					__('Cloudflare IP cache updated successfully!', 'cfcdn-comment-ip-fix'),
 					'success'
 				);
 			} else {
 				add_settings_error(
 					'cfcdnipfix_messages',
 					'cache_updated',
-					'Cloudflare IP 更新失败：' . esc_html($cf_ip_data['message']),
+					sprintf(
+						__('Failed to update Cloudflare IP: %s', 'cfcdn-comment-ip-fix'),
+						esc_html($cf_ip_data['message'])
+					),
 					'error'
 				);
 			}
@@ -180,7 +189,10 @@ class Corrected_Commenter_IP_CfCDN {
 						add_settings_error(
 							'cfcdnipfix_messages',
 							'invalid_ip_format',
-							'输入包含无效的IP地址或CIDR格式，已被忽略：' . esc_html($potential_ip),
+							sprintf(
+								__('Invalid IP address or CIDR format ignored: %s', 'cfcdn-comment-ip-fix'),
+								esc_html($potential_ip)
+							),
 							'warning'
 						);
 					}
@@ -213,7 +225,7 @@ class Corrected_Commenter_IP_CfCDN {
 			add_settings_error(
 				'cfcdnipfix_messages',
 				'cache_updated',
-				'已成功更新额外 CDN IP！',
+				__('Additional CDN IPs updated successfully!', 'cfcdn-comment-ip-fix'),
 				'success'
 			);
 		}
@@ -224,7 +236,7 @@ class Corrected_Commenter_IP_CfCDN {
 		// 验证权限和 nonce
 		if (!current_user_can('manage_options') ||
 			!check_ajax_referer('cfcdnipfix_settings-options', 'nonce', false)) {
-			wp_send_json_error(['message' => '权限不足或请求无效。']);
+			wp_send_json_error(['message' => __('Insufficient permissions or invalid request.', 'cfcdn-comment-ip-fix')]);
 		}
 
 		// 执行更新操作
@@ -233,12 +245,17 @@ class Corrected_Commenter_IP_CfCDN {
 		if ($cf_ip_data['status'] === 'success')  {
 			// 返回成功响应
 			wp_send_json_success([
-				'message' => 'Cloudflare IP 缓存已成功更新！',
+				'message' => __('Cloudflare IP cache updated successfully!', 'cfcdn-comment-ip-fix'),
 				'cache_data' => print_r(json_decode(get_option(self::CDN_IP_CACHE_KEY), true), true) // 返回更新后的缓存数据
 			]);
 		} else {
 			// 返回错误响应
-			wp_send_json_error(['message' => 'Cloudflare IP 缓存更新失败：' . esc_html($cf_ip_data['message'])]);
+			wp_send_json_error([
+				'message' => sprintf(
+					__('Failed to update Cloudflare IP cache: %s', 'cfcdn-comment-ip-fix'),
+					esc_html($cf_ip_data['message'])
+				)
+			]);
 		}
 	}
 
@@ -286,12 +303,24 @@ class Corrected_Commenter_IP_CfCDN {
 		// 从 API 获取新数据
 		$response = wp_remote_get($api_url);
 		if (is_wp_error($response)) {
-			return ['status' => 'error', 'message' => '获取 Cloudflare IP 数据失败：' . $response->get_error_message()];
+			return [
+				'status' => 'error',
+				'message' => sprintf(
+					__('Failed to fetch Cloudflare IP data: %s', 'cfcdn-comment-ip-fix'),
+					$response->get_error_message()
+				)
+			];
 		}
 		$response_body = wp_remote_retrieve_body($response);
 		$new_cloudflare_data = json_decode($response_body, true);
 		if (!$new_cloudflare_data['success']) {
-			return ['status' => 'error', 'message' => 'Cloudflare API 返回错误：' . json_encode($new_cloudflare_data['errors'], JSON_UNESCAPED_UNICODE)];
+			return [
+				'status' => 'error',
+				'message' => sprintf(
+					__('Cloudflare API returned an error: %s', 'cfcdn-comment-ip-fix'),
+					json_encode($new_cloudflare_data['errors'], JSON_UNESCAPED_UNICODE)
+				)
+			];
 		}
 
 		// 获取现有缓存数据并将缓存数据解码为数组

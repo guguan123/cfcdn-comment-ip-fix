@@ -1,0 +1,55 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: cfcdn-comment-ip-fix 1.0\n"
+"Language: zh_CN\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Cloudflare Commenter IP Fix"
+msgstr "Cloudflare 评论者 IP 修复"
+
+msgid "Cloudflare IP cache updated successfully!"
+msgstr "Cloudflare IP 缓存已成功更新！"
+
+msgid "Failed to update Cloudflare IP: %s"
+msgstr "Cloudflare IP 更新失败：%s"
+
+msgid "Invalid IP address or CIDR format ignored: %s"
+msgstr "输入包含无效的 IP 地址或 CIDR 格式，已被忽略：%s"
+
+msgid "Additional CDN IPs updated successfully!"
+msgstr "已成功更新额外 CDN IP！"
+
+msgid "Insufficient permissions or invalid request."
+msgstr "权限不足或请求无效。"
+
+msgid "Failed to fetch Cloudflare IP data: %s"
+msgstr "获取 Cloudflare IP 数据失败：%s"
+
+msgid "Cloudflare API returned an error: %s"
+msgstr "Cloudflare API 返回错误：%s"
+
+msgid "Correct Commenter IP"
+msgstr "修正评论者 IP"
+
+msgid "This is the management page for the Commenter IP Fix plugin."
+msgstr "这是修正评论者 IP 插件的管理页面。"
+
+msgid "Detected IP: %s"
+msgstr "识别到的 IP：%s"
+
+msgid "Update Cloudflare IP Cache"
+msgstr "更新 Cloudflare IP 缓存"
+
+msgid "Additional CDN IPs"
+msgstr "额外 CDN IP"
+
+msgid "Enter additional CDN IP addresses (separate multiple addresses with commas):"
+msgstr "请输入额外的 CDN IP 地址（多个地址请用逗号分隔）："
+
+msgid "Update Additional CDN IPs"
+msgstr "更新额外 CDN IP"
+
+msgid "Current Stored IP Information"
+msgstr "当前存储的 IP 信息"
