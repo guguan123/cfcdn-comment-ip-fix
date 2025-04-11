@@ -8,6 +8,7 @@ Stable tag: 0.1.1
 Requires PHP: 7.4
 License: MIT
 License URI: https://opensource.org/licenses/MIT
+Language: zh_CN
 
 一个用于修复使用 Cloudflare CDN 的 WordPress 网站的评论者 IP 的插件。
 
