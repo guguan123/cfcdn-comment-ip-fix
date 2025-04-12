@@ -56,26 +56,6 @@ This service is provided by Cloudflare, Inc.
 
 This information is fetched to ensure the plugin functions correctly with Cloudflare’s CDN services. No personal or sensitive user data is transmitted in this process.
 
-== Compatibility ==
-
-Tested up to: WordPress 6.7
-Requires at least: WordPress 6.0
-Requires PHP: 7.4
-
-== Install ==
-
-1. 下载ZIP格式的代码文件并安装插件。
-2. 启用插件。
-3. 插件会自动开始更新 Cloudflare 的 IP 地址列表。
-
 == Libraries Used ==
 
 - [IPLib](https://github.com/mlocati/ip-lib): 用于处理 IP 地址的解析与匹配。
-
-== Support ==
-
-如果您遇到任何问题或有建议，请随时联系插件开发者或者通过 GitHub 提交 issue。
-
-== License ==
-
-本插件使用 MIT License，详细内容请参见 LICENSE 文件。
