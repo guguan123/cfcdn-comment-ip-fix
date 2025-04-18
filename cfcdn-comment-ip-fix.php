@@ -11,7 +11,7 @@
  * License URI:       https://choosealicense.com/licenses/mit/
  * Text Domain:       cfcdn-comment-ip-fix
  * Requires at least: 6.0
- * Tested up to:      6.7
+ * Tested up to:      6.8
  * PHP Version:       8.2
  * Requires PHP:      7.0
  * Changelog:         https://github.com/guguan123/cfcdn-comment-ip-fix/releases
