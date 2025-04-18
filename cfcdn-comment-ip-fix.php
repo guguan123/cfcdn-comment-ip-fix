@@ -44,13 +44,14 @@ class Corrected_Commenter_IP_CfCDN {
 
 		switch ($set_data['mode']) {
 			case 'global':
-				// 启用全局 IP 修正
+				// 修正全局 IP
 				add_action('init', array($this, 'cfcdnipfix_global_address'), 1);
 				break;
 			case 'fix_part':
 			default:
-				// 绑定评论发布时保存真实 IP
+				// 修正评论 IP
 				add_filter('preprocess_comment', [$this, 'cfcdnipfix_save_real_ip_on_comment']);
+				// 修正找回密码邮件中的 IP
 				add_filter('retrieve_password_message', [$this, 'cfcdnipfix_in_reset_password_email'], 10, 4);
 				break;
 		}
@@ -467,36 +468,57 @@ class Corrected_Commenter_IP_CfCDN {
 	}
 
 	/**
-	 * 在评论元数据中保存真实 IP 和地理位置信息
-	 *
-	 * @param int $commentdata
-	 */
-	public function cfcdnipfix_save_real_ip_on_comment($commentdata) {
+	* 获取经过CDN修正后的真实客户端IP地址
+	*
+	* 该函数通过检查指定的HTTP头信息（如X-Forwarded-For、CF-Connecting-IP等），
+	* 从CDN的IP范围内提取真实的客户端IP地址。如果依赖库或CDN IP范围不可用，
+	* 则记录错误并返回空值。
+	*
+	* @param string $header_type HTTP头类型，用于提取IP地址，默认为 'X-Forwarded-For'
+	*                            可选值：'X-Forwarded-For', 'CF-Connecting-IP', 'Forwarded'
+	*
+	* @return string|null 返回修正后的真实客户端IP地址（有效的IPv4或IPv6地址），
+	*                     如果无法获取有效IP则返回null
+	*/
+	protected function cfcdnipfix_get_fix_ip($header_type = 'X-Forwarded-For') {
 		// 检查依赖库是否可用
 		if (!class_exists('\IPLib\Factory')) {
 			error_log(__('IPLib not found. Real IP validation skipped.', 'cfcdn-comment-ip-fix'));
-			return $commentdata;
+			return;
 		}
 
 		$cdnIpRanges = $this->get_cdn_ip_ranges();
 		if (empty($cdnIpRanges)) {
 			error_log(__('No CDN IP ranges found. Real IP validation skipped.', 'cfcdn-comment-ip-fix'));
-			return $commentdata;
+			return;
 		}
 
-		$set = 'X-Forwarded-For';
-		switch ($set) {
+		switch ($header_type) {
+			case 'CF-Connecting-IP':
+				$fix_ip = $this->getCfConnectingIp($cdnIpRanges);
+				break;
 			case 'Forwarded':
 				// $fix_ip = $this->getForwardedIp($cdnIpRanges);
 				break;
 			case 'X-Forwarded-For':
+			default:
 				$fix_ip = $this->getXForwardedForIp($cdnIpRanges);
 				break;
-			case 'CF-Connecting-IP':
-			default:
-				$fix_ip = $this->getCfConnectingIp($cdnIpRanges);
-				break;
 		}
+
+		// 如果找到有效 IP ，就返回
+		if (!empty($fix_ip) && filter_var($fix_ip, FILTER_VALIDATE_IP)) {
+			return $fix_ip;
+		}
+	}
+
+	/**
+	 * 在评论元数据中保存真实 IP 和地理位置信息
+	 *
+	 * @param int $commentdata
+	 */
+	public function cfcdnipfix_save_real_ip_on_comment($commentdata) {
+		$fix_ip = $this->cfcdnipfix_get_fix_ip();
 
 		if (isset($fix_ip) && $fix_ip) {
 			// 将访客真实 IP 存储为评论的元数据
@@ -505,72 +527,46 @@ class Corrected_Commenter_IP_CfCDN {
 		return $commentdata;
 	}
 
-
+	/**
+	* 重置密码邮件中替换 CDN IP 为真实 IP
+	*
+	* 该函数用于在 WordPress 重置密码邮件中将 CDN 提供的 IP 地址替换为用户的真实 IP 地址。
+	* 它会检查依赖库是否存在，获取 CDN IP 范围，并根据配置选择合适的 IP 获取方式。
+	* 如果邮件中包含 IP 地址，则将旧 IP 替换为真实 IP。
+	*
+	* @param string $message     重置密码邮件的内容
+	* @param string $key         重置密码的密钥
+	* @param string $user_login  用户登录名
+	* @param object $user_data   用户数据对象
+	* @return string             修改后的邮件内容
+	*/
 	public function cfcdnipfix_in_reset_password_email($message, $key, $user_login, $user_data) {
-		// 检查依赖库是否可用
-		if (!class_exists('\IPLib\Factory')) {
-			error_log(__('IPLib not found. Real IP validation skipped.', 'cfcdn-comment-ip-fix'));
-			return $message;
-		}
-
-		$cdnIpRanges = $this->get_cdn_ip_ranges();
-		if (empty($cdnIpRanges)) {
-			error_log(__('No CDN IP ranges found. Real IP validation skipped.', 'cfcdn-comment-ip-fix'));
-			return $message;
-		}
-
-		$set = 'X-Forwarded-For';
-		switch ($set) {
-			case 'Forwarded':
-				// $real_ip = $this->getForwardedIp($cdnIpRanges);
-				break;
-			case 'X-Forwarded-For':
-				$real_ip = $this->getXForwardedForIp($cdnIpRanges);
-				break;
-			case 'CF-Connecting-IP':
-			default:
-				$real_ip = $this->getCfConnectingIp($cdnIpRanges);
-				break;
-		}
+		$fix_ip = $this->cfcdnipfix_get_fix_ip();
 
 		// 检查邮件是否包含 IP 地址
-		if (!empty($real_ip) && preg_match('/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/', $message, $matches)) {
+		if (!empty($fix_ip) && preg_match('/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/', $message, $matches)) {
 			// 将旧 IP 替换为真实 IP
-			$message = str_replace($matches[0], $real_ip, $message);
+			$message = str_replace($matches[0], $fix_ip, $message);
 		}
 		return $message;
 	}
 
 
+	/**
+	* 修正全局 IP 地址
+	*
+	* 该函数在 WordPress 初始化时运行，用于将 CDN 提供的 IP 地址替换为用户的真实 IP 地址。
+	* 它会检查依赖库是否存在，获取 CDN IP 范围，并根据配置选择合适的 IP 获取方式。
+	* 如果找到有效的真实 IP，则更新 $_SERVER['REMOTE_ADDR']。
+	*
+	* @return void
+	*/
 	public function cfcdnipfix_global_address() {
-		// 检查依赖库是否可用
-		if (!class_exists('\IPLib\Factory')) {
-			error_log(__('IPLib not found. Real IP validation skipped.', 'cfcdn-comment-ip-fix'));
-			return;
-		}
+		$fix_ip = $this->cfcdnipfix_get_fix_ip();
 
-		$cdnIpRanges = $this->get_cdn_ip_ranges();
-		if (empty($cdnIpRanges)) {
-			error_log(__('No CDN IP ranges found. Real IP validation skipped.', 'cfcdn-comment-ip-fix'));
-			return;
-		}
-
-		$set = 'X-Forwarded-For';
-		switch ($set) {
-			case 'Forwarded':
-				// $real_ip = $this->getForwardedIp($cdnIpRanges);
-				break;
-			case 'X-Forwarded-For':
-				$real_ip = $this->getXForwardedForIp($cdnIpRanges);
-				break;
-			case 'CF-Connecting-IP':
-			default:
-				$real_ip = $this->getCfConnectingIp($cdnIpRanges);
-				break;
-		}
 		// 如果找到有效IP，替换REMOTE_ADDR
-		if (!empty($real_ip)) {
-			$_SERVER['REMOTE_ADDR'] = $real_ip;
+		if (!empty($fix_ip)) {
+			$_SERVER['REMOTE_ADDR'] = $fix_ip;
 		}
 	}
 

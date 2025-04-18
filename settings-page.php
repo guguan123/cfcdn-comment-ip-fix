@@ -5,7 +5,7 @@ if (!defined('ABSPATH')) {
 // 页面内容
 $ip_cache = json_decode(get_option(self::CDN_IP_CACHE_KEY), true);
 if (!class_exists('\IPLib\Factory')) {
-	$now_ip = $this->getXForwardedForIp($this->get_cdn_ip_ranges());
+	$now_ip = $this->cfcdnipfix_get_fix_ip();
 }
 ?>
 
