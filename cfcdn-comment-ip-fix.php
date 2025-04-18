@@ -37,11 +37,8 @@ class Corrected_Commenter_IP_CfCDN {
 			return; // 停止构造
 		}
 
-		$set_default = array(
-			'mode' => 'fix_part'
-		);
+		$set_default = array('mode' => 'fix_part');
 		$set_data = array_merge($set_default, json_decode(get_option(self::CDN_IP_SET_KEY, '{}'), true));
-
 		switch ($set_data['mode']) {
 			case 'global':
 				// 修正全局 IP
@@ -544,7 +541,7 @@ class Corrected_Commenter_IP_CfCDN {
 		$fix_ip = $this->cfcdnipfix_get_fix_ip();
 
 		// 检查邮件是否包含 IP 地址
-		if (!empty($fix_ip) && preg_match('/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/', $message, $matches)) {
+		if (!empty($fix_ip) && preg_match('/\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b/', $message, $matches) && filter_var($matches[0], FILTER_VALIDATE_IP)) {
 			// 将旧 IP 替换为真实 IP
 			$message = str_replace($matches[0], $fix_ip, $message);
 		}
