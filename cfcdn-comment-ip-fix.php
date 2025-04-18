@@ -26,6 +26,7 @@ class Corrected_Commenter_IP_CfCDN {
 
 	// 定义缓存的唯一选项键
 	const CDN_IP_CACHE_KEY = 'cfcdnipfix_cdn_ip_cache';
+	const CDN_IP_SET_KEY = 'cfcdnipfix_cdn_ip_set';
 
 	public function __construct() {
 		// 加载第三方库文件
@@ -36,14 +37,30 @@ class Corrected_Commenter_IP_CfCDN {
 			return; // 停止构造
 		}
 
+		$set_default = array(
+			'mode' => 'fix_comment'
+		);
+		$set_data = array_merge($set_default, json_decode(get_option(self::CDN_IP_SET_KEY, '{}'), true));
+
+		switch ($set_data['mode']) {
+			case 'global':
+				// 启用全局 IP 修正
+				add_action('init', array($this, 'cfcdnipfix_global_address'), 1);
+				break;
+			case 'fix_comment':
+			default:
+				// 绑定评论发布时保存真实 IP
+				add_filter('preprocess_comment', [$this, 'cfcdnipfix_save_real_ip_on_comment']);
+				add_filter('retrieve_password_message', [$this, 'cfcdnipfix_in_reset_password_email'], 10, 4);
+				break;
+		}
+
 		// 插件激活时注册定时任务
 		register_activation_hook(__FILE__, ['Corrected_Commenter_IP_CfCDN', 'cfcdnipfix_schedule_cron_job']);
 		// 插件停用时清理定时任务
 		register_deactivation_hook(__FILE__, ['Corrected_Commenter_IP_CfCDN', 'cfcdnipfix_clear_cron_job']);
 		// 卸载插件后清理缓存数据
 		register_uninstall_hook(__FILE__, ['Corrected_Commenter_IP_CfCDN', 'cfcdnipfix_uninstall']);
-		// 绑定评论发布时保存真实 IP
-		add_action('preprocess_comment', [$this, 'cfcdnipfix_save_real_ip_on_comment']);
 		// 定义定时任务的 Hook
 		add_action('cfcdnipfix_update_cloudflare_ips', 'cfcdnipfix_fetch_and_save_cloudflare_ips');
 		// 添加管理页面
@@ -87,6 +104,7 @@ class Corrected_Commenter_IP_CfCDN {
 	public static function cfcdnipfix_uninstall() {
 		// 删除缓存的Cloudflare IP
 		delete_option(self::CDN_IP_CACHE_KEY);
+		delete_option(self::CDN_IP_SET_KEY);
 		// 清除计划的cron任务
 		self::cfcdnipfix_clear_cron_job();
 	}
@@ -485,6 +503,75 @@ class Corrected_Commenter_IP_CfCDN {
 			$commentdata['comment_author_IP'] = $fix_ip;
 		}
 		return $commentdata;
+	}
+
+
+	public function cfcdnipfix_in_reset_password_email($message, $key, $user_login, $user_data) {
+		// 检查依赖库是否可用
+		if (!class_exists('\IPLib\Factory')) {
+			error_log(__('IPLib not found. Real IP validation skipped.', 'cfcdn-comment-ip-fix'));
+			return $message;
+		}
+
+		$cdnIpRanges = $this->get_cdn_ip_ranges();
+		if (empty($cdnIpRanges)) {
+			error_log(__('No CDN IP ranges found. Real IP validation skipped.', 'cfcdn-comment-ip-fix'));
+			return $message;
+		}
+
+		$set = 'X-Forwarded-For';
+		switch ($set) {
+			case 'Forwarded':
+				// $real_ip = $this->getForwardedIp($cdnIpRanges);
+				break;
+			case 'X-Forwarded-For':
+				$real_ip = $this->getXForwardedForIp($cdnIpRanges);
+				break;
+			case 'CF-Connecting-IP':
+			default:
+				$real_ip = $this->getCfConnectingIp($cdnIpRanges);
+				break;
+		}
+
+		// 检查邮件是否包含 IP 地址
+		if (!empty($real_ip) && preg_match('/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/', $message, $matches)) {
+			// 将旧 IP 替换为真实 IP
+			$message = str_replace($matches[0], $real_ip, $message);
+		}
+		return $message;
+	}
+
+
+	public function cfcdnipfix_global_address() {
+		// 检查依赖库是否可用
+		if (!class_exists('\IPLib\Factory')) {
+			error_log(__('IPLib not found. Real IP validation skipped.', 'cfcdn-comment-ip-fix'));
+			return;
+		}
+
+		$cdnIpRanges = $this->get_cdn_ip_ranges();
+		if (empty($cdnIpRanges)) {
+			error_log(__('No CDN IP ranges found. Real IP validation skipped.', 'cfcdn-comment-ip-fix'));
+			return;
+		}
+
+		$set = 'X-Forwarded-For';
+		switch ($set) {
+			case 'Forwarded':
+				// $real_ip = $this->getForwardedIp($cdnIpRanges);
+				break;
+			case 'X-Forwarded-For':
+				$real_ip = $this->getXForwardedForIp($cdnIpRanges);
+				break;
+			case 'CF-Connecting-IP':
+			default:
+				$real_ip = $this->getCfConnectingIp($cdnIpRanges);
+				break;
+		}
+		// 如果找到有效IP，替换REMOTE_ADDR
+		if (!empty($real_ip)) {
+			$_SERVER['REMOTE_ADDR'] = $real_ip;
+		}
 	}
 
 }
