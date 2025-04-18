@@ -38,7 +38,7 @@ class Corrected_Commenter_IP_CfCDN {
 		}
 
 		$set_default = array(
-			'mode' => 'fix_comment'
+			'mode' => 'fix_part'
 		);
 		$set_data = array_merge($set_default, json_decode(get_option(self::CDN_IP_SET_KEY, '{}'), true));
 
@@ -47,7 +47,7 @@ class Corrected_Commenter_IP_CfCDN {
 				// 启用全局 IP 修正
 				add_action('init', array($this, 'cfcdnipfix_global_address'), 1);
 				break;
-			case 'fix_comment':
+			case 'fix_part':
 			default:
 				// 绑定评论发布时保存真实 IP
 				add_filter('preprocess_comment', [$this, 'cfcdnipfix_save_real_ip_on_comment']);

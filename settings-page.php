@@ -14,10 +14,12 @@ if (!class_exists('\IPLib\Factory')) {
 	<p><?php _e('This is the management page for the Commenter IP Fix plugin.', 'cfcdn-comment-ip-fix'); ?></p>
 	<p><?php printf(__('Detected IP: %s', 'cfcdn-comment-ip-fix'), esc_html($now_ip ?? 'N/A')); ?></p>
 	<hr />
+
 	<form method="post" id="cfcdnipfix-update-cloudflare-ips-form">
 		<?php settings_fields('cfcdnipfix_settings'); // 添加 nonce 等字段 ?>
 		<?php submit_button(__('Update Cloudflare IP Cache', 'cfcdn-comment-ip-fix'), 'secondary', 'cfcdnipfix_update_cloudflare_ips', false); ?>
 	</form>
+
 	<form method="post" id="cfcdnipfix-update-other-ips-form">
 		<?php settings_fields('cfcdnipfix_settings'); // 添加 nonce 等字段 ?>
 		<h2><?php _e('Additional CDN IPs', 'cfcdn-comment-ip-fix'); ?></h2>
@@ -26,6 +28,7 @@ if (!class_exists('\IPLib\Factory')) {
 
 		<?php submit_button(__('Update Additional CDN IPs', 'cfcdn-comment-ip-fix'), 'secondary', 'cfcdnipfix_update_additional_cdn_ips', false); ?>
 	</form>
+
 	<hr />
 	<h2><?php _e('Current Stored IP Information', 'cfcdn-comment-ip-fix'); ?></h2>
 	<pre>
