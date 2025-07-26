@@ -4,7 +4,7 @@ Donate link: https://s1.imagehub.cc/images/2025/03/04/33128a3f3455b55b5c7321ee4c
 Tags: Cloudflare, IP, Security, CDN
 Requires at least: 6.0
 Tested up to: 6.8
-Stable tag: 0.1.2
+Stable tag: 0.1.3
 Requires PHP: 7.4
 License: MIT
 License URI: https://opensource.org/licenses/MIT
