@@ -53,3 +53,6 @@ msgstr "更新额外 CDN IP"
 
 msgid "Current Stored IP Information"
 msgstr "当前存储的 IP 信息"
+
+msgid "IPLib not found. Plugin functionality disabled."
+msgstr "找不到IPLib库，请检查插件是否损坏"

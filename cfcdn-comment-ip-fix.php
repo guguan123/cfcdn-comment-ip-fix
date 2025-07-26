@@ -3,7 +3,7 @@
  * @wordpress-plugin
  * Plugin Name:       Corrected commenter IP for Cloudflare CDN
  * Plugin URI:        https://github.com/guguan123/cfcdn-comment-ip-fix
- * Description:       修复评论者的IP信息，适用于使用 Cloudflare CDN 的网站。（🚨本插件不属于 Cloudflare 官方！）
+ * Description:       修复评论者的IP信息，适用于使用 Cloudflare CDN 的网站。
  * Version:           0.1.2
  * Author:            GuGuan123
  * Author URI:        https://github.com/guguan123
@@ -359,7 +359,7 @@ class Corrected_Commenter_IP_CfCDN {
 	 * @param array $ranges
 	 * @return bool
 	 */
-	protected function isIpInRange($ip, $ranges) {
+	private function isIpInRange($ip, $ranges) {
 		$ipAddress = \IPLib\Factory::addressFromString($ip);
 		foreach ($ranges as $range) {
 			if ($range->contains($ipAddress)) {
@@ -403,7 +403,7 @@ class Corrected_Commenter_IP_CfCDN {
 	 * @param array $cdnIpRanges
 	 * @return string
 	 */
-	protected function getForwardedIp($cdnIpRanges) {
+	private function getForwardedIp($cdnIpRanges) {
 		if (empty($_SERVER['HTTP_FORWARDED']) || empty($_SERVER['REMOTE_ADDR'])) {
 			return false;
 		} else {
@@ -427,26 +427,33 @@ class Corrected_Commenter_IP_CfCDN {
 	 * @param array $cdnIpRanges
 	 * @return string
 	 */
-	protected function getXForwardedForIp($cdnIpRanges) {
-		if (empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-			return false;
-		} else {
+	private function getXForwardedForIp($cdnIpRanges) {
+		if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
 			$x_forwarded_for_ips = sanitize_text_field($_SERVER['HTTP_X_FORWARDED_FOR']);
+		} else {
+			return false;
 		}
 		if (isset($_SERVER['REMOTE_ADDR'])) {
 			$remote_ip_address = sanitize_text_field($_SERVER['REMOTE_ADDR']);
 			if ($this->is_valid_ip_or_cidr($remote_ip_address) != false) $ips[] = $remote_ip_address;
+		} else {
+			return false;
 		}
 
-		$ips = array_merge($ips ?? [], array_map('trim', explode(',', $x_forwarded_for_ips)));
+		$ips = array_merge($ips ?? [], array_reverse(array_map('trim', explode(',', $x_forwarded_for_ips))));
 
 		foreach ($ips as $ip) {
 			if ($this->isIpInRange($ip, $cdnIpRanges)) {
 				continue;
 			}
-			if ($this->is_valid_ip_or_cidr($ip) != false) return $ip;
 		}
-		return false;
+
+		// 检查IP是否正确
+		if ($this->is_valid_ip_or_cidr($ip) == false) {
+			return false;
+		} else {
+			return $ip;
+		}
 	}
 
 	/**
@@ -454,7 +461,7 @@ class Corrected_Commenter_IP_CfCDN {
 	 * @param array $cdnIpRanges
 	 * @return string
 	 */
-	protected function getCfConnectingIp($cdnIpRanges) {
+	private function getCfConnectingIp($cdnIpRanges) {
 		if (isset($_SERVER['REMOTE_ADDR']) && isset($_SERVER['HTTP_CF_CONNECTING_IP'])) {
 			$remote_ip_address = sanitize_text_field($_SERVER['REMOTE_ADDR']);
 			$cf_connecting_ip = sanitize_text_field($_SERVER['HTTP_CF_CONNECTING_IP']);
@@ -478,12 +485,6 @@ class Corrected_Commenter_IP_CfCDN {
 	*                     如果无法获取有效IP则返回null
 	*/
 	protected function cfcdnipfix_get_fix_ip($header_type = 'X-Forwarded-For') {
-		// 检查依赖库是否可用
-		if (!class_exists('\IPLib\Factory')) {
-			error_log(__('IPLib not found. Real IP validation skipped.', 'cfcdn-comment-ip-fix'));
-			return;
-		}
-
 		$cdnIpRanges = $this->get_cdn_ip_ranges();
 		if (empty($cdnIpRanges)) {
 			error_log(__('No CDN IP ranges found. Real IP validation skipped.', 'cfcdn-comment-ip-fix'));
@@ -569,9 +570,7 @@ class Corrected_Commenter_IP_CfCDN {
 
 }
 
-if (!file_exists(__DIR__ . '/vendor/autoload.php')) {
-	return;
-}
-
 // 初始化插件
-new Corrected_Commenter_IP_CfCDN();
+if (class_exists('Corrected_Commenter_IP_CfCDN')) {
+	new Corrected_Commenter_IP_CfCDN();
+}

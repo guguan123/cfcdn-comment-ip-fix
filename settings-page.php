@@ -4,15 +4,12 @@ if (!defined('ABSPATH')) {
 }
 // 页面内容
 $ip_cache = json_decode(get_option(self::CDN_IP_CACHE_KEY), true);
-if (!class_exists('\IPLib\Factory')) {
-	$now_ip = $this->cfcdnipfix_get_fix_ip();
-}
 ?>
 
 <div class="wrap">
 	<h1><?php _e('Correct Commenter IP', 'cfcdn-comment-ip-fix'); ?></h1>
 	<p><?php _e('This is the management page for the Commenter IP Fix plugin.', 'cfcdn-comment-ip-fix'); ?></p>
-	<p><?php printf(__('Detected IP: %s', 'cfcdn-comment-ip-fix'), esc_html($now_ip ?? 'N/A')); ?></p>
+	<p><?php printf(__('Detected IP: %s', 'cfcdn-comment-ip-fix'), esc_html($this->cfcdnipfix_get_fix_ip() ?? 'N/A')); ?></p>
 	<hr />
 
 	<form method="post" id="cfcdnipfix-update-cloudflare-ips-form">
