@@ -1,7 +1,7 @@
 === Corrected commenter IP for Cloudflare CDN ===
 Contributors: GuGuan123
 Donate link: https://qr.alipay.com/fkx17591v9cegbc196ly4b3
-Tags: Cloudflare, IP, Security, CDN, comments, proxy, real ip, ip address, privacy, spam detection
+Tags: Cloudflare, Security, CDN, comments, real ip
 Requires at least: 6.0
 Tested up to: 6.8
 Stable tag: 0.1.3
