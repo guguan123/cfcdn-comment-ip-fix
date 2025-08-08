@@ -69,8 +69,6 @@ class Corrected_Commenter_IP_CfCDN {
 		add_action('admin_enqueue_scripts', [$this, 'cfcdnipfix_enqueue_admin_scripts']);
 		// 添加 AJAX 动作
 		add_action('wp_ajax_cfcdnipfix_update_cloudflare_ips', [$this, 'cfcdnipfix_handle_ajax_update']);
-		// 加载语言翻译
-		add_action('plugins_loaded', [$this, 'cfcdnipfix_load_textdomain']);
 	}
 
 	/**
@@ -106,11 +104,6 @@ class Corrected_Commenter_IP_CfCDN {
 		// 清除计划的cron任务
 		self::cfcdnipfix_clear_cron_job();
 	}
-
-	public function cfcdnipfix_load_textdomain() {
-		load_plugin_textdomain('cfcdn-comment-ip-fix', false, dirname(plugin_basename(__FILE__)) . '/languages/');
-	}
-
 
 
 	public function cfcdnipfix_admin_menu() {
