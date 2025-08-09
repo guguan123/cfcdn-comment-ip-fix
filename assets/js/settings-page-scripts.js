@@ -5,7 +5,7 @@ jQuery(document).ready(function($) {
 		e.preventDefault(); // 阻止默认表单提交
 
 		var $button = $(this);
-		$button.prop('disabled', true).val('正在更新...'); // 禁用按钮并显示加载状态
+		$button.prop('disabled', true).val('Updating...'); // 禁用按钮并显示加载状态
 
 		// 获取表单数据，包括 nonce
 		var data = {

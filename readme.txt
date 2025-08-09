@@ -4,7 +4,7 @@ Donate link: https://qr.alipay.com/fkx17591v9cegbc196ly4b3
 Tags: Cloudflare, Security, CDN, comments, real ip
 Requires at least: 6.0
 Tested up to: 6.8
-Stable tag: 0.1.3
+Stable tag: 0.1.4
 Requires PHP: 7.4
 License: MIT
 License URI: https://opensource.org/licenses/MIT
@@ -73,6 +73,9 @@ The retrieval of this information (Cloudflare IP list) ensures the plugin functi
 -   **[IPLib](https://github.com/mlocati/ip-lib)**: Used for parsing and matching IP addresses.
 
 == Changelog ==
+
+= 0.1.4 =
+改进了国际化支持，更符合WordPress的要求
 
 = 0.1.3 =
 * Improved: Comprehensive formatting and content optimization of the `readme.txt` file to comply with WordPress.org standards.

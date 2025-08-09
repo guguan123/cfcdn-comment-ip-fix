@@ -4,7 +4,7 @@
  * Plugin Name:       Corrected commenter IP for Cloudflare CDN
  * Plugin URI:        https://github.com/guguan123/cfcdn-comment-ip-fix
  * Description:       修复评论者的IP信息，适用于使用 Cloudflare CDN 的网站。
- * Version:           0.1.3
+ * Version:           0.1.4
  * Author:            GuGuan123
  * Author URI:        https://github.com/guguan123
  * License:           MIT
@@ -33,7 +33,7 @@ class Corrected_Commenter_IP_CfCDN {
 		if (file_exists(__DIR__ . '/vendor/autoload.php')) {
 			require_once __DIR__ . '/vendor/autoload.php';
 		} else {
-			error_log(__('IPLib not found. Plugin functionality disabled.', 'cfcdn-comment-ip-fix'));
+			if (WP_DEBUG) error_log(__('IPLib not found. Plugin functionality disabled.', 'cfcdn-comment-ip-fix'));
 			return; // 停止构造
 		}
 
@@ -480,7 +480,7 @@ class Corrected_Commenter_IP_CfCDN {
 	protected function cfcdnipfix_get_fix_ip($header_type = 'X-Forwarded-For') {
 		$cdnIpRanges = $this->get_cdn_ip_ranges();
 		if (empty($cdnIpRanges)) {
-			error_log(__('No CDN IP ranges found. Real IP validation skipped.', 'cfcdn-comment-ip-fix'));
+			if (WP_DEBUG) error_log(__('No CDN IP ranges found. Real IP validation skipped.', 'cfcdn-comment-ip-fix'));
 			return;
 		}
 
