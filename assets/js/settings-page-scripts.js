@@ -27,7 +27,7 @@ jQuery(document).ready(function($) {
 		}).fail(function() {
 			alert('请求失败，请稍后重试。');
 		}).always(function() {
-			$button.prop('disabled', false).val('更新 Cloudflare IP 缓存'); // 恢复按钮
+			$button.prop('disabled', false).val('Update Cloudflare IP Cache'); // 恢复按钮
 		});
 	});
 });
